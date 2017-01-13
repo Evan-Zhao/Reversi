@@ -1,14 +1,4 @@
-module Board
-(
-    Board,
-    n,
-    initBoard,
-    showBoardFor,
-    moveAt,
-    noMove,
-    countChess,
-    indices
-) where
+module Board where
 
 import qualified Data.Map.Strict as M
 import Data.List (intersperse, find, dropWhile)
@@ -48,15 +38,17 @@ initBoard = updateMove $ nonBlank `M.union` blank where -- Union prefers first
                             ((n', n'-1), Taken White), ((n', n'), Taken Black) ]
     n' = n `div` 2
 
-showBoardFor :: Player -> Board -> String
-showBoardFor player = (firstLine ++) . (seperateWith splitter) . (map $ uncurry showRowFor) . rows where
-    showRowFor row n = show n ++ (seperateWith " | " $ map (showStateFor player) $ elements row) ++ "\n"
+spaces :: Int -> String
+spaces n = replicate n ' '
+
+showBoardFor :: Color -> Board -> String
+showBoardFor color = (firstLine ++) . (seperateWith splitter) . (map $ uncurry showRowFor) . rows where
     firstLine        = spaces 4 ++ (concat $ intersperse (spaces 3) $ map show [0..(n-1)]) ++ "\n"
-    splitter         = spaces 2 ++ (concat $ outsperse "+" $ replicate n "---") ++ "\n";
+    showRowFor row n = show n ++ (seperateWith " | " $ map (showStateFor color) $ elements row) ++ "\n"
     elements         = foldr (:) []
     seperateWith str = concat . outsperse str
     outsperse x xs   = x: intersperse x xs ++ [x]
-    spaces n         = replicate n ' '
+    splitter         = spaces 2 ++ (concat $ outsperse "+" $ replicate n "---") ++ "\n";
 
 -- Update move state after chess is add/removed from board
 -- Internal
@@ -85,18 +77,18 @@ flipable color board idx = foldr flipableDir [] [0..7] where
     flipableDir dir accum = accum ++ (reversiSpan color board idx dir)
 
 -- Public
-moveAt :: Player -> Board -> Indice -> Maybe Board
-moveAt player board idx = if null flipIndices then Nothing
+moveAt :: Color -> Board -> Indice -> Maybe Board
+moveAt color board idx = if null flipIndices then Nothing
                             else Just $ updateMove $ newMap `M.union` board where
-    flipIndices = moveOfPlayer player (board M.! idx) -- These grids must have been taken by (oppose color)
-    allIndices  = idx : flipIndices -- because we also place chess at given idx
-    newMap      = M.fromList $ zip allIndices $ repeat $ myChess player
-    color       = pcolor player
+    flipIndices = colorToMove color (board M.! idx) -- These grids must have been taken by (oppose color)
+    allIndices = idx : flipIndices -- because we also place chess at given idx
+    newMap = M.fromList $ zip allIndices $ repeat $ Taken color
 
-noMove :: Player -> Board -> Bool
-noMove player = and . (M.map $ gridNotValid player) where
-    gridNotValid player state = null $ moveOfPlayer player state
+noMove :: Color -> Board -> Bool
+noMove color = and . (M.map $ gridNotValid color) where
+    gridNotValid color = null . colorToMove color
 
-countChess :: Board -> (Player, Player) -> (Int, Int)
-countChess board (p1, p2) = (countPlayerChess p1 board, countPlayerChess p2 board) where
-    countPlayerChess player = M.size . M.filter (== myChess player)
+-- Regulation: White first
+countChess :: Board -> (Int, Int)
+countChess board = (countColor White board, countColor Black board) where
+    countColor color = M.size . M.filter (== Taken color)

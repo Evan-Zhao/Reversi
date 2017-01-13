@@ -1,5 +1,18 @@
-module Struct where
+module Struct
+(
+    Color (..),
+    State (..),
+    WMove,
+    BMove,
+    Indice,
+    oppose,
+    showStateFor,
+    nullState,
+    isVacant,
+    colorToMove
+) where
 
+-- Means both chess pieces and sides.
 data Color = White | Black deriving (Eq, Show)
 oppose :: Color -> Color
 oppose White = Black
@@ -18,12 +31,11 @@ type BMove = [Indice]
 -- in later case this grid cannot be taken.
 data State = Taken Color | Vacant WMove BMove deriving (Eq, Show)
 
-showStateFor :: Player -> State -> String
+showStateFor :: Color -> State -> String
 showStateFor _ (Taken White) = "O"
 showStateFor _ (Taken Black) = "X"
-showStateFor player (Vacant wm bm)
-    | pcolor player == White = if (not $ null wm) then "*" else " "
-    | otherwise              = if (not $ null bm) then "*" else " "
+showStateFor White (Vacant wm bm) = if (not $ null wm) then "*" else " "
+showStateFor Black (Vacant wm bm) = if (not $ null bm) then "*" else " "
 
 nullState :: State
 nullState = Vacant [] []
@@ -32,21 +44,11 @@ isVacant :: State -> Bool
 isVacant (Vacant _ _) = True
 isVacant _ = False
 
--- Finally, player identity
-data Player = Human {pcolor :: Color} | AI {pcolor :: Color}
+colorToMove :: Color -> State -> [Indice]
+colorToMove _ (Taken _) = []
+colorToMove White (Vacant wm _) = wm
+colorToMove Black (Vacant _ bm) = bm
 
-moveOfPlayer :: Player -> State -> [Indice]
-moveOfPlayer _ (Taken _) = []
-moveOfPlayer player (Vacant wm bm)
-    | pcolor player == White = wm
-    | otherwise              = bm
-
-myChess :: Player -> State
-myChess player
-    | pcolor player == White = Taken White
-    | otherwise              = Taken Black
-
-oppoChess :: Player -> State
-oppoChess player
-    | pcolor player == White = Taken Black
-    | otherwise              = Taken White
+-- Flag for game state
+-- Human should move | AI should move | Neither can move
+data GameState = HumanMove | AIMove | Ended

@@ -15,8 +15,5 @@ REVERSI is a command-line implementation of this game. Up  to now, the program i
 AI of this game is based on the minmax search, a naive version.
 
 ## Todo
-* Extract part of logic from IO (effectful) part: in main.hs
-* So that input can flow through less functions, which makes user command (-q, --show) possible
-* Refactor Color data (: struct.hs) so that it binds color to user identity
-* Achieve PVP mode
-* (#) Experiments on simple ML for AI
+* Add user command such as -q, --help, --show
+* (#) Experiments on simple ML for AI, for which TCP interface is required
